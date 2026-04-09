@@ -1,0 +1,52 @@
+name: Proxmox Audit
+
+on:
+  # Run automatically every day at 06:00 UTC
+  schedule:
+    - cron: '0 6 * * *'
+  # Allow manual trigger from the Actions UI
+  workflow_dispatch:
+    inputs:
+      proxmox_node:
+        description: 'Proxmox node name to audit (leave blank to auto-detect)'
+        required: false
+        default: ''
+
+jobs:
+  audit:
+    name: Audit Proxmox Server
+    # Runs on the self-hosted runner installed in the "toolbox" VM
+    runs-on: [self-hosted, toolbox]
+
+    env:
+      PROXMOX_HOST:           ${{ secrets.PROXMOX_HOST }}
+      PROXMOX_TOKEN_ID:       ${{ secrets.PROXMOX_TOKEN_ID }}
+      PROXMOX_TOKEN_SECRET:   ${{ secrets.PROXMOX_TOKEN_SECRET }}
+      PROXMOX_PORT:           ${{ secrets.PROXMOX_PORT || '8006' }}
+      PROXMOX_INSECURE:       ${{ secrets.PROXMOX_INSECURE || 'false' }}
+      PROXMOX_NODE:           ${{ github.event.inputs.proxmox_node || '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install required tools (curl + jq)
+        run: |
+          if ! command -v jq &>/dev/null || ! command -v bc &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq jq bc
+          fi
+
+      - name: Make audit script executable
+        run: chmod +x scripts/proxmox_audit.sh
+
+      - name: Run Proxmox audit
+        run: scripts/proxmox_audit.sh
+
+      - name: Upload audit log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proxmox-audit-${{ github.run_id }}
+          path: /tmp/proxmox_audit_*.log
+          if-no-files-found: ignore
+          retention-days: 30
