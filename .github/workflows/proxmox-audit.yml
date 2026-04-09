@@ -18,6 +18,9 @@ jobs:
     # Runs on the self-hosted runner installed in the "toolbox" VM
     runs-on: [self-hosted, toolbox]
 
+    permissions:
+      contents: read
+
     env:
       PROXMOX_HOST:           ${{ secrets.PROXMOX_HOST }}
       PROXMOX_TOKEN_ID:       ${{ secrets.PROXMOX_TOKEN_ID }}
@@ -30,7 +33,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install required tools (curl + jq)
+      - name: Install required tools (jq + bc)
         run: |
           if ! command -v jq &>/dev/null || ! command -v bc &>/dev/null; then
             sudo apt-get update -qq && sudo apt-get install -y -qq jq bc

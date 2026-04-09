@@ -131,7 +131,7 @@ audit_nodes() {
     maxmem=$(echo "$node" | jq -r '.maxmem // 0')
     uptime_s=$(echo "$node" | jq -r '.uptime // 0')
 
-    uptime_h=$(( uptime_s / 3600 ))d\ $(( (uptime_s % 3600) / 60 ))h
+    uptime_h="$(( uptime_s / 3600 ))d $(( (uptime_s % 3600) / 60 ))h"
     mem_used_h=$(bytes_to_human "$mem")
     mem_total_h=$(bytes_to_human "$maxmem")
     cpu_pct=$(echo "scale=1; $cpu * 100" | bc)
@@ -181,7 +181,7 @@ audit_node_status() {
   md_h2 "📊 Node Resource Usage (${AUDIT_NODE})"
   md "| Resource | Used | Total | Usage |"
   md "|----------|------|-------|-------|"
-  md "| CPU | ${cpu_pct}% | 100% | $(pct_bar "${cpu_pct%%.*}") |"
+  md "| CPU | ${cpu_pct}% | 100% | $(pct_bar "${cpu_pct%.*}") |"
   md "| Memory | $(bytes_to_human "$mem_used") | $(bytes_to_human "$mem_total") | $(pct_bar "$mem_pct") |"
   md "| Root FS | $(bytes_to_human "$rootfs_used") | $(bytes_to_human "$rootfs_total") | $(pct_bar "$rootfs_pct") |"
   md ""
